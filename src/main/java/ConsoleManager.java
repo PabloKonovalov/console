@@ -6,6 +6,9 @@ import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Класс, отвечающий за создание окна консоли
@@ -15,14 +18,20 @@ import java.awt.event.KeyListener;
  */
 public class ConsoleManager extends JFrame {
 
-    private JFrame jFrame;
+    /**
+     * Console window
+     */
     private JTextPane console;
     private JTextField inputLine;
-    private JScrollPane scrollPane;
 
     private StyledDocument document;
 
     boolean trace = false;
+
+    List<String> recentUsed = new ArrayList<>();
+    int recentUsedId = 0;
+    int recentUsedMaximum = 10;
+
 
     public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         new ConsoleManager();
@@ -32,7 +41,7 @@ public class ConsoleManager extends JFrame {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
 
-        jFrame = new JFrame();
+        JFrame jFrame = new JFrame();
         jFrame.setTitle("Pablo SM");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -51,7 +60,8 @@ public class ConsoleManager extends JFrame {
             String text = inputLine.getText();
 
             if (!text.isEmpty()) {
-                println(text + "\n", false);
+                recentUsed.add(text);
+                recentUsedId = 0;
 
                 doCommand(text);
                 scrollToBottom();
@@ -67,7 +77,19 @@ public class ConsoleManager extends JFrame {
 
             @Override
             public void keyPressed(KeyEvent e) {
-
+                if (e.getKeyCode() == KeyEvent.VK_UP) {
+                    if (recentUsedId < (recentUsedMaximum - 1) && recentUsedId < (recentUsed.size() - 1)) {
+                        recentUsedId++;
+                    }
+                    inputLine.setText(recentUsed.get(recentUsed.size() - 1 - recentUsedId));
+                } else {
+                    if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                        if (recentUsedId > 0) {
+                            recentUsedId--;
+                        }
+                        inputLine.setText(recentUsed.get(recentUsed.size() - 1 - recentUsedId));
+                    }
+                }
             }
 
             @Override
@@ -76,8 +98,7 @@ public class ConsoleManager extends JFrame {
             }
         });
 
-
-        scrollPane = new JScrollPane(console);
+        JScrollPane scrollPane = new JScrollPane(console);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
 
@@ -93,7 +114,6 @@ public class ConsoleManager extends JFrame {
         Image imageIcon = new ImageIcon("data/img/console-icon.png").getImage();
 
         jFrame.setIconImage(imageIcon);
-
         jFrame.setVisible(true);
 
     }
@@ -148,6 +168,7 @@ public class ConsoleManager extends JFrame {
     private void doCommand(String text) {
         final String[] commands = text.split(" ");
 
+        String mainCommand = commands[0];
         if (commands[0].equalsIgnoreCase("clear")) {
             clear();
         } else if (commands[0].equalsIgnoreCase("start")) {
